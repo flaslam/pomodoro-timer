@@ -1,3 +1,10 @@
+Live at: https://pomodoro-timer-flaslam.vercel.app/
+
+Timer app built in Next.js based on the Pomodoro technique.
+
+- Theme changes based on
+- Stats are saved for user locally
+
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
 ## Getting Started
