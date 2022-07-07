@@ -1,19 +1,15 @@
 import "../styles/globals.css";
 import type { AppProps } from "next/app";
-import { ThemeProvider, jsx } from "@emotion/react";
-
-const theme = {
-  backgroundColor: "green",
-  color: "red",
-};
-
-// const red = "#d95550";
-// const blue = "#4c9195";
+import { ThemeProvider } from "@emotion/react";
+import { ColorScheme, redTheme } from "../lib/themes";
+import { useState } from "react";
 
 function MyApp({ Component, pageProps }: AppProps) {
+  const [theme, setTheme] = useState<ColorScheme>(redTheme);
+
   return (
     <ThemeProvider theme={theme}>
-      <Component {...pageProps} />
+      <Component {...pageProps} theme={theme} setTheme={setTheme} />
     </ThemeProvider>
   );
 }

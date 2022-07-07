@@ -4,50 +4,21 @@ import styles from "../styles/Home.module.css";
 import { useEffect, useRef, useState } from "react";
 import { formatSecondsToMinutes } from "../lib/utils";
 import { OptionsButton, TimerButton } from "../components/buttons";
+import Nav from "../components/nav";
+import { Period, Timer, timers } from "../lib/timers";
+import { Stats } from "../lib/stats";
+import { ColorScheme } from "../lib/themes";
 
-enum Period {
-  Break,
-  Work,
+interface HomeProps {
+  theme: ColorScheme;
+  setTheme(colorScheme: ColorScheme): void;
 }
 
-interface Timer {
-  type: Period;
-  length: number;
-}
-
-const timers = {
-  work: { type: Period.Work, length: 25 * 60 },
-  shortBreak: { type: Period.Break, length: 5 * 60 },
-  longBreak: { type: Period.Break, length: 15 * 60 },
-};
-
-const STATS_DATA: string = "pomodoroStats";
-
-interface Stats {
-  focusPeriodsTotal: number;
-}
-
-// set colour scheme
-// each timer has it's own colour scheme
-// each colour scheme has:
-
-// TODO: these should instead be objects
-interface colourScheme {
-  bg: string;
-  light: string;
-  dark: string;
-  darkest: string;
-}
-
-const colourSchemes = {
-  red: { bg: "", light: "", dark: "", darkest: "" },
-  blueLight: { bg: "", light: "", dark: "", darkest: "" },
-  blueDark: { bg: "", light: "", dark: "", darkest: "" },
-};
-
-let currentColourScheme: colourScheme = colourSchemes.red;
-
-const Home: NextPage = () => {
+const Home: NextPage<HomeProps> = ({ theme, setTheme }) => {
+  const STATS_DATA: string = "pomodoroStats";
+  const isMounted = useRef(false);
+  // const theme = useTheme();
+  // const [theme, setTheme] = useState(useTheme());
   const [timer, setTimer] = useState<number>(timers.work.length);
   const [currentTimerType, setCurrentTimerType] = useState<Timer>(timers.work);
   const [intervalId, setIntervalId] = useState<any>(null);
@@ -56,23 +27,26 @@ const Home: NextPage = () => {
   const [progress, setProgress] = useState<number>(0);
   const [stats, setStats] = useState<Stats>({ focusPeriodsTotal: 0 });
 
-  const isMounted = useRef(false);
-
-  // Handling buttons
-  const handleStart = () => {
-    startTimer();
-  };
-
-  const handleStop = () => {
-    stopTimer();
-  };
-
   const handleTimerOptionButton = (newTimerType: Timer) => {
-    // TODO: first display a warning if timer is running
+    // Alert user that changing the option will cancel the current timer
+    if (timerRunning) {
+      stopTimer();
+      const result = confirm(
+        "Timer is currently running. Are you sure you want to change?"
+      );
+
+      if (result) {
+        updateTimerType(newTimerType);
+        return;
+      } else {
+        startTimer();
+      }
+      return;
+    }
+
     updateTimerType(newTimerType);
   };
 
-  // Timer functions
   const startTimer = () => {
     if (timer <= 0) return;
 
@@ -93,10 +67,11 @@ const Home: NextPage = () => {
   };
 
   const updateTimerType = (newTimerType: Timer) => {
-    stopTimer();
+    if (timerRunning) stopTimer();
     setTimer(newTimerType.length);
     setCurrentTimerType(newTimerType);
     setProgress(0);
+    setTheme(newTimerType.theme);
   };
 
   const completeInterval = () => {
@@ -132,6 +107,15 @@ const Home: NextPage = () => {
     localStorage.setItem(STATS_DATA, JSON.stringify(stats));
   };
 
+  const updateStats = () => {
+    setStats((prevState) => {
+      const newStats: Stats = {
+        focusPeriodsTotal: prevState.focusPeriodsTotal + 1,
+      };
+      return newStats;
+    });
+  };
+
   // On component mount
   useEffect(() => {
     loadStats();
@@ -157,16 +141,7 @@ const Home: NextPage = () => {
     }
   }, [timer]);
 
-  const updateStats = () => {
-    setStats((prevState) => {
-      const newStats: Stats = {
-        focusPeriodsTotal: prevState.focusPeriodsTotal + 1,
-      };
-      return newStats;
-    });
-  };
-
-  // On update stats, save to local storage
+  // On component update stats
   useEffect(() => {
     // Make sure this doesn't run on first mount
     if (!isMounted.current) {
@@ -174,6 +149,7 @@ const Home: NextPage = () => {
       return;
     }
 
+    // save to local storage
     localStorage.setItem(STATS_DATA, JSON.stringify(stats));
   }, [stats]);
 
@@ -185,13 +161,25 @@ const Home: NextPage = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
+      <style>{`
+        html {
+          background-color: ${theme.bg};
+        }
+      `}</style>
+
+      <Nav progress={progress} theme={theme} />
+
       <main className={styles.main}>
-        <div className={styles.timerContainer}>
+        <div
+          className={styles.timerContainer}
+          style={{ backgroundColor: theme.light }}
+        >
           <div className={styles.timerOptions}>
             <ul>
               <li>
                 <OptionsButton
                   onClick={() => handleTimerOptionButton(timers.work)}
+                  style={{ backgroundColor: theme.dark }}
                 >
                   Pomodoro
                 </OptionsButton>
@@ -199,6 +187,7 @@ const Home: NextPage = () => {
               <li>
                 <OptionsButton
                   onClick={() => handleTimerOptionButton(timers.shortBreak)}
+                  style={{ backgroundColor: theme.dark }}
                 >
                   Short Break
                 </OptionsButton>
@@ -206,6 +195,7 @@ const Home: NextPage = () => {
               <li>
                 <OptionsButton
                   onClick={() => handleTimerOptionButton(timers.longBreak)}
+                  style={{ backgroundColor: theme.dark }}
                 >
                   Long Break
                 </OptionsButton>
@@ -216,11 +206,19 @@ const Home: NextPage = () => {
             {formatSecondsToMinutes(timer)}
           </div>
           {!timerRunning ? (
-            <TimerButton className={styles.timerButton} onClick={handleStart}>
+            <TimerButton
+              className={styles.timerButton}
+              onClick={startTimer}
+              style={{ color: theme.bg }}
+            >
               Start
             </TimerButton>
           ) : (
-            <TimerButton className={styles.timerButton} onClick={handleStop}>
+            <TimerButton
+              className={styles.timerButton}
+              onClick={stopTimer}
+              style={{ color: theme.bg }}
+            >
               Stop
             </TimerButton>
           )}
@@ -239,16 +237,6 @@ const Home: NextPage = () => {
         {!isMounted.current ? null : (
           <div>user stats: {stats.focusPeriodsTotal}</div>
         )}
-
-        {/* <div>
-          <div>
-            <div>Tasks</div>
-            <div>Options button</div>
-          </div>
-          <div>List of all tasks</div>
-          <div>Add task</div>
-          <div>Est: Act: Finish at:</div>
-        </div> */}
       </main>
     </div>
   );
