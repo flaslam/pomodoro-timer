@@ -1,16 +1,23 @@
 import styles from "../styles/Nav.module.css";
+import { useState } from "react";
+import { Stats } from "../lib/stats";
+import { NavButton } from "./buttons";
+import { ColorScheme } from "../lib/themes";
+import Report from "./Report";
+import Modal from "./Modal";
+import Settings from "./Settings";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import InsertChartOutlinedIcon from "@mui/icons-material/InsertChartOutlined";
 import SettingsIcon from "@mui/icons-material/Settings";
-import { useTheme } from "@emotion/react";
-import { ColorScheme } from "../lib/themes";
 
 interface NavProps {
   progress: number;
   theme: ColorScheme;
+  stats: Stats;
 }
-const Nav: React.FC<NavProps> = ({ progress, theme }) => {
-  // const theme = useTheme();
+const Nav: React.FC<NavProps> = ({ progress, theme, stats }) => {
+  const [openReport, setOpenReport] = useState<boolean>(false);
+  const [openSettings, setOpenSettings] = useState<boolean>(false);
 
   return (
     <nav className={styles.nav}>
@@ -20,12 +27,32 @@ const Nav: React.FC<NavProps> = ({ progress, theme }) => {
           Pomodoro Timer
         </li>
         <li>
-          <InsertChartOutlinedIcon />
-          Report
+          <NavButton
+            onClick={() => setOpenReport(true)}
+            style={{ backgroundColor: theme.light }}
+          >
+            <InsertChartOutlinedIcon />
+            Report
+          </NavButton>
+          {!openReport ? null : (
+            <Modal closeModal={setOpenReport}>
+              <Report stats={stats} />
+            </Modal>
+          )}
         </li>
         <li>
-          <SettingsIcon />
-          Settings
+          <NavButton
+            onClick={() => setOpenSettings(true)}
+            style={{ backgroundColor: theme.light }}
+          >
+            <SettingsIcon />
+            Settings
+          </NavButton>
+          {!openSettings ? null : (
+            <Modal closeModal={setOpenSettings}>
+              <Settings closeModal={setOpenSettings} />
+            </Modal>
+          )}
         </li>
       </ul>
 

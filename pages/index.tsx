@@ -4,7 +4,7 @@ import styles from "../styles/Home.module.css";
 import { useEffect, useRef, useState } from "react";
 import { formatSecondsToMinutes } from "../lib/utils";
 import { OptionsButton, TimerButton } from "../components/buttons";
-import Nav from "../components/nav";
+import Nav from "../components/Nav";
 import { Period, Timer, timers } from "../lib/timers";
 import { Stats } from "../lib/stats";
 import { ColorScheme } from "../lib/themes";
@@ -17,14 +17,14 @@ interface HomeProps {
 const Home: NextPage<HomeProps> = ({ theme, setTheme }) => {
   const STATS_DATA: string = "pomodoroStats";
   const isMounted = useRef(false);
-  // const theme = useTheme();
-  // const [theme, setTheme] = useState(useTheme());
   const [timer, setTimer] = useState<number>(timers.work.length);
   const [currentTimerType, setCurrentTimerType] = useState<Timer>(timers.work);
   const [intervalId, setIntervalId] = useState<any>(null);
   const [timerRunning, setTimerRunning] = useState<boolean>(false);
   const [sessionCount, setSessionCount] = useState<number>(1);
   const [progress, setProgress] = useState<number>(0);
+
+  // TODO: switch stats to useContext to use in our report without drilling
   const [stats, setStats] = useState<Stats>({ focusPeriodsTotal: 0 });
 
   const handleTimerOptionButton = (newTimerType: Timer) => {
@@ -122,6 +122,8 @@ const Home: NextPage<HomeProps> = ({ theme, setTheme }) => {
 
     // Initiate timer with current timer type length
     setTimer(currentTimerType.length);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // On component update timer
@@ -139,6 +141,7 @@ const Home: NextPage<HomeProps> = ({ theme, setTheme }) => {
       // Mark timer complete.
       completeInterval();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timer]);
 
   // On component update stats
@@ -167,7 +170,7 @@ const Home: NextPage<HomeProps> = ({ theme, setTheme }) => {
         }
       `}</style>
 
-      <Nav progress={progress} theme={theme} />
+      <Nav progress={progress} theme={theme} stats={stats} />
 
       <main className={styles.main}>
         <div
@@ -179,7 +182,14 @@ const Home: NextPage<HomeProps> = ({ theme, setTheme }) => {
               <li>
                 <OptionsButton
                   onClick={() => handleTimerOptionButton(timers.work)}
-                  style={{ backgroundColor: theme.dark }}
+                  style={{
+                    backgroundColor:
+                      currentTimerType === timers.work
+                        ? theme.dark
+                        : theme.light,
+                    fontWeight:
+                      currentTimerType === timers.work ? 600 : undefined,
+                  }}
                 >
                   Pomodoro
                 </OptionsButton>
@@ -187,7 +197,14 @@ const Home: NextPage<HomeProps> = ({ theme, setTheme }) => {
               <li>
                 <OptionsButton
                   onClick={() => handleTimerOptionButton(timers.shortBreak)}
-                  style={{ backgroundColor: theme.dark }}
+                  style={{
+                    backgroundColor:
+                      currentTimerType === timers.shortBreak
+                        ? theme.dark
+                        : theme.light,
+                    fontWeight:
+                      currentTimerType === timers.shortBreak ? 600 : undefined,
+                  }}
                 >
                   Short Break
                 </OptionsButton>
@@ -195,7 +212,14 @@ const Home: NextPage<HomeProps> = ({ theme, setTheme }) => {
               <li>
                 <OptionsButton
                   onClick={() => handleTimerOptionButton(timers.longBreak)}
-                  style={{ backgroundColor: theme.dark }}
+                  style={{
+                    backgroundColor:
+                      currentTimerType === timers.longBreak
+                        ? theme.dark
+                        : theme.light,
+                    fontWeight:
+                      currentTimerType === timers.longBreak ? 600 : undefined,
+                  }}
                 >
                   Long Break
                 </OptionsButton>
@@ -234,9 +258,9 @@ const Home: NextPage<HomeProps> = ({ theme, setTheme }) => {
             )}
           </div>
         </div>
-        {!isMounted.current ? null : (
+        {/* {!isMounted.current ? null : (
           <div>user stats: {stats.focusPeriodsTotal}</div>
-        )}
+        )} */}
       </main>
     </div>
   );
